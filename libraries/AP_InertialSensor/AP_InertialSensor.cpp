@@ -610,6 +610,9 @@ uint8_t AP_InertialSensor::register_gyro(uint16_t raw_sample_rate_hz,
 
     bool saved = _gyro_id[_gyro_count].load();
 
+    // DEBUG***
+    hal.console->printf("_gyro_id = %" PRId32" | id = %" PRId32" | saved = %d\n", (uint32_t)_gyro_id[_gyro_count] , id, (int)saved);
+
     if (saved && (uint32_t)_gyro_id[_gyro_count] != id) {
         // inconsistent gyro id - mark it as needing calibration
         _gyro_cal_ok[_gyro_count] = false;
