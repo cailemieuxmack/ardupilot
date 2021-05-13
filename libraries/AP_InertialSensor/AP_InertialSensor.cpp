@@ -1,3 +1,8 @@
+// DEBUG
+#include <iostream>
+#include <fstream>
+
+
 #include <assert.h>
 
 #include <AP_Common/AP_Common.h>
@@ -1226,9 +1231,46 @@ bool AP_InertialSensor::use_accel(uint8_t instance) const
     return (get_accel_health(instance) && _use[instance]);
 }
 
-void
-AP_InertialSensor::_init_gyro()
-{
+
+// TEST
+void AP_InertialSensor::_init_gyro() {
+    std::ifstream GyroData;
+
+    GyroData.open("GyroData.bin", std::fstream::in | std::fstream::binary); // opens the binary file
+
+    if( !GyroData ) { // file couldn't be opened
+        hal.console->printf("ERROR: could not open file\n");
+        return;
+    }
+
+
+    uint8_t num_gyros;
+    GyroData.read(reinterpret_cast<char*>(&num_gyros), sizeof(num_gyros));
+
+    std::cout << "num_gyros: " << num_gyros << std::endl; 
+
+    float next_value;
+    
+    for (int i = 0; i < num_gyros; i++) {
+
+        Vector3f gyro_offset;
+
+        for (int j = 0; j < 3; j++) {
+            GyroData.read(reinterpret_cast<char*>(&next_value), sizeof(next_value));
+            gyro_offset[j] = next_value;
+        }
+
+        std::cout << "before assign" << std::endl; 
+        
+        _gyro_offset[i] = gyro_offset;
+
+        std::cout << "after assign" << std::endl;
+    }
+}
+
+
+
+void AP_InertialSensor::_init_gyro1() {
     uint8_t num_gyros = MIN(get_gyro_count(), INS_MAX_INSTANCES);
     Vector3f last_average[INS_MAX_INSTANCES], best_avg[INS_MAX_INSTANCES];
     Vector3f new_gyro_offset[INS_MAX_INSTANCES];
@@ -1339,6 +1381,20 @@ AP_InertialSensor::_init_gyro()
         }
     }
 
+
+    // DEBUG
+    std::ofstream GyroData;
+
+    GyroData.open("GyroData.bin", std::fstream::binary); // opens the binary file
+
+    if( !GyroData ) { // file couldn't be opened
+        hal.console->printf("ERROR: could not open file\n");
+    }
+
+
+    GyroData.write(reinterpret_cast<const char *>(&num_gyros), sizeof(num_gyros));
+
+
     // we've kept the user waiting long enough - use the best pair we
     // found so far
     hal.console->printf("\n");
@@ -1354,8 +1410,19 @@ AP_InertialSensor::_init_gyro()
         } else {
             _gyro_cal_ok[k] = true;
             _gyro_offset[k] = new_gyro_offset[k];
+
+            // DEBUG (add offset value to output file)
+            //if (GyroData.isOpen()) {
+                Vector3f tmp = (Vector3f) _gyro_offset[k];
+                GyroData.write(reinterpret_cast<const char *>(&(tmp[0])), sizeof(tmp[0]));
+                GyroData.write(reinterpret_cast<const char *>(&(tmp[1])), sizeof(tmp[1]));
+                GyroData.write(reinterpret_cast<const char *>(&(tmp[2])), sizeof(tmp[2]));
+            //}
         }
     }
+
+    //DEBUG
+    GyroData.close();
 
     // restore orientation
     _board_orientation = saved_orientation;

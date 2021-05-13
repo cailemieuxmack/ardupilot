@@ -433,6 +433,9 @@ private:
     // gyro initialisation
     void _init_gyro();
 
+    //DEBUG
+    void _init_gyro1();
+
     // Calibration routines borrowed from Rolfe Schmidt
     // blog post describing the method: http://chionophilous.wordpress.com/2011/10/24/accelerometer-calibration-iv-1-implementing-gauss-newton-on-an-atmega/
     // original sketch available at http://rolfeschmidt.com/mathtools/skimetrics/adxl_gn_calibration.pde
